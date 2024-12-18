@@ -1,5 +1,5 @@
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export const WORK_START_TIME = '09:30';
 export const WORK_END_TIME = '18:00';
@@ -8,7 +8,7 @@ export const TIMEZONE = 'Asia/Kolkata';
 export type AttendanceStatus = 'P' | 'PL' | 'A' | 'L';
 
 export const getAttendanceStatus = (loginTime: Date): AttendanceStatus => {
-  const indianTime = utcToZonedTime(loginTime, TIMEZONE);
+  const indianTime = toZonedTime(loginTime, TIMEZONE);
   const startTime = parseISO(`${format(indianTime, 'yyyy-MM-dd')}T${WORK_START_TIME}`);
   
   if (isBefore(indianTime, startTime)) {
@@ -18,5 +18,5 @@ export const getAttendanceStatus = (loginTime: Date): AttendanceStatus => {
 };
 
 export const formatIndianTime = (date: Date): string => {
-  return format(utcToZonedTime(date, TIMEZONE), 'dd/MM/yyyy HH:mm:ss');
+  return format(toZonedTime(date, TIMEZONE), 'dd/MM/yyyy HH:mm:ss');
 };
