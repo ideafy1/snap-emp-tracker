@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, getDocs, addDoc } from "firebase/firestore";
 import { format } from "date-fns";
 import { LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 interface AttendanceLog {
   employeeId: string;
@@ -22,6 +26,13 @@ interface AttendanceLog {
   formattedTime: string;
 }
 
+interface RegularizationRequest {
+  date: Date;
+  time: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 const EmployeeDashboard = () => {
   const [personalLogs, setPersonalLogs] = useState<AttendanceLog[]>([]);
   const [stats, setStats] = useState({
@@ -30,11 +41,41 @@ const EmployeeDashboard = () => {
     late: 0,
     regularize: 0
   });
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [regularizationReason, setRegularizationReason] = useState("");
+  const [regularizationTime, setRegularizationTime] = useState("");
+  const [showRegularizeDialog, setShowRegularizeDialog] = useState(false);
   const employeeId = "39466"; // This should come from authentication context
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       window.location.href = "/";
+    }
+  };
+
+  const handleRegularizationSubmit = async () => {
+    if (!selectedDate || !regularizationReason || !regularizationTime) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "regularization_requests"), {
+        employeeId,
+        date: selectedDate,
+        time: regularizationTime,
+        reason: regularizationReason,
+        status: 'pending',
+        submittedAt: new Date()
+      });
+
+      toast.success("Regularization request submitted successfully");
+      setShowRegularizeDialog(false);
+      setRegularizationReason("");
+      setRegularizationTime("");
+    } catch (error) {
+      console.error("Error submitting regularization request:", error);
+      toast.error("Failed to submit regularization request");
     }
   };
 
@@ -52,14 +93,13 @@ const EmployeeDashboard = () => {
       });
       setPersonalLogs(logs);
       
-      // Calculate stats
       const present = logs.filter(log => log.status === 'P').length;
       const late = logs.filter(log => log.status === 'PL').length;
       const regularize = logs.filter(log => !log.status).length;
       
       setStats({
         present,
-        absent: 30 - (present + late), // Assuming 30 days month
+        absent: 30 - (present + late),
         late,
         regularize
       });
@@ -86,42 +126,94 @@ const EmployeeDashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-green-900">
-          <CardHeader>
-            <CardTitle>Present</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Button 
+          className="h-auto p-6 bg-green-900 hover:bg-green-800"
+          onClick={() => toast.info(`You have been present for ${stats.present} days this month`)}
+        >
+          <div className="text-left w-full">
+            <h3 className="text-xl font-bold mb-2">Present (P)</h3>
             <p className="text-4xl font-bold">{stats.present}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </Button>
         
-        <Card className="bg-red-900">
-          <CardHeader>
-            <CardTitle>Absent</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Button 
+          className="h-auto p-6 bg-red-900 hover:bg-red-800"
+          onClick={() => toast.info(`You have been absent for ${stats.absent} days this month`)}
+        >
+          <div className="text-left w-full">
+            <h3 className="text-xl font-bold mb-2">Absent (A)</h3>
             <p className="text-4xl font-bold">{stats.absent}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </Button>
         
-        <Card className="bg-yellow-900">
-          <CardHeader>
-            <CardTitle>Late</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Button 
+          className="h-auto p-6 bg-yellow-900 hover:bg-yellow-800"
+          onClick={() => toast.info(`You have been late for ${stats.late} days this month`)}
+        >
+          <div className="text-left w-full">
+            <h3 className="text-xl font-bold mb-2">Late (L)</h3>
             <p className="text-4xl font-bold">{stats.late}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </Button>
         
-        <Card className="bg-blue-900">
-          <CardHeader>
-            <CardTitle>Regularize</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Button 
+          className="h-auto p-6 bg-blue-900 hover:bg-blue-800"
+          onClick={() => setShowRegularizeDialog(true)}
+        >
+          <div className="text-left w-full">
+            <h3 className="text-xl font-bold mb-2">Regularize</h3>
             <p className="text-4xl font-bold">{stats.regularize}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </Button>
       </div>
+
+      <Dialog open={showRegularizeDialog} onOpenChange={setShowRegularizeDialog}>
+        <DialogContent className="bg-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Regularize Attendance</DialogTitle>
+            <DialogDescription>
+              Please fill in the details to regularize your attendance
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Date</Label>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className="rounded-md border bg-gray-700"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Time</Label>
+              <Input
+                type="time"
+                value={regularizationTime}
+                onChange={(e) => setRegularizationTime(e.target.value)}
+                className="bg-gray-700"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Textarea
+                value={regularizationReason}
+                onChange={(e) => setRegularizationReason(e.target.value)}
+                className="bg-gray-700"
+                placeholder="Please provide a reason for regularization"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRegularizeDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRegularizationSubmit}>
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-6">
         <Card className="bg-gray-800">
@@ -172,11 +264,27 @@ const EmployeeDashboard = () => {
                         </Dialog>
                       </td>
                       <td className="p-4">
-                        <img 
-                          src={log.photo} 
-                          alt="Attendance" 
-                          className="w-16 h-16 object-cover rounded"
-                        />
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <img 
+                              src={log.photo} 
+                              alt="Attendance" 
+                              className="w-16 h-16 object-cover rounded cursor-pointer"
+                            />
+                          </DialogTrigger>
+                          <DialogContent className="bg-gray-800 text-white">
+                            <DialogHeader>
+                              <DialogTitle>Attendance Photo</DialogTitle>
+                            </DialogHeader>
+                            <div className="flex justify-center">
+                              <img 
+                                src={log.photo} 
+                                alt="Attendance" 
+                                className="max-w-full h-auto rounded"
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </td>
                     </tr>
                   ))}
