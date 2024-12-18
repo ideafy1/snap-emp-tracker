@@ -1,15 +1,32 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+
+interface AttendanceLog {
+  employeeId: string;
+  timestamp: string;
+  photo: string;
+  ipAddress: string;
+  location: string;
+}
 
 const AdminDashboard = () => {
-  const mockEmployees = [
-    {
-      id: "39466",
-      name: "Aditya Kumar",
-      lastLogin: "2024-03-20 09:30:00",
-      status: "Active",
-    },
-    // Add more mock data as needed
-  ];
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLog[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const logs: AttendanceLog[] = [];
+      querySnapshot.forEach((doc) => {
+        logs.push(doc.data() as AttendanceLog);
+      });
+      setAttendanceLogs(logs);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="container mx-auto py-8">
@@ -18,7 +35,7 @@ const AdminDashboard = () => {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Employee Activity</CardTitle>
+            <CardTitle>Employee Attendance Logs</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -26,21 +43,25 @@ const AdminDashboard = () => {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-4">Employee ID</th>
-                    <th className="text-left p-4">Name</th>
-                    <th className="text-left p-4">Last Login</th>
-                    <th className="text-left p-4">Status</th>
+                    <th className="text-left p-4">Timestamp</th>
+                    <th className="text-left p-4">IP Address</th>
+                    <th className="text-left p-4">Location</th>
+                    <th className="text-left p-4">Photo</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mockEmployees.map((employee) => (
-                    <tr key={employee.id} className="border-b">
-                      <td className="p-4">{employee.id}</td>
-                      <td className="p-4">{employee.name}</td>
-                      <td className="p-4">{employee.lastLogin}</td>
+                  {attendanceLogs.map((log, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-4">{log.employeeId}</td>
+                      <td className="p-4">{new Date(log.timestamp).toLocaleString()}</td>
+                      <td className="p-4">{log.ipAddress}</td>
+                      <td className="p-4">{log.location}</td>
                       <td className="p-4">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                          {employee.status}
-                        </span>
+                        <img 
+                          src={log.photo} 
+                          alt="Attendance" 
+                          className="w-16 h-16 object-cover rounded"
+                        />
                       </td>
                     </tr>
                   ))}
