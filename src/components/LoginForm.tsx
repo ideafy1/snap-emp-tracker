@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import Camera from "./Camera";
+import { getAttendanceStatus, formatIndianTime } from "@/lib/attendance";
 
 const LoginForm = () => {
   const [employeeId, setEmployeeId] = useState("");
@@ -27,8 +28,19 @@ const LoginForm = () => {
 
     // Employee credentials
     if (employeeId === "39466" && password === "Aditya@123") {
-      setShowCamera(true);
-      toast.success("Please capture your photo to continue");
+      // Check if first login of the day
+      const today = new Date().toISOString().split('T')[0];
+      const attendanceRef = doc(db, "attendance", `${employeeId}_${today}`);
+      const attendanceDoc = await getDoc(attendanceRef);
+
+      if (!attendanceDoc.exists()) {
+        setShowCamera(true);
+        toast.success("First login of the day - Please capture your photo");
+      } else {
+        // Subsequent login
+        navigate("/employee");
+        toast.success("Welcome back!");
+      }
       return;
     }
 
@@ -37,30 +49,43 @@ const LoginForm = () => {
 
   const handlePhotoCapture = async (imageData: string) => {
     try {
+      // Get location
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+
+      const loginTime = new Date();
+      const status = getAttendanceStatus(loginTime);
+
       const loginData = {
         employeeId,
-        timestamp: new Date().toISOString(),
+        timestamp: loginTime.toISOString(),
         photo: imageData,
         ipAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
-        location: "Location data will be added here", // You'll need to implement geolocation
+        location: {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        },
+        status,
+        formattedTime: formatIndianTime(loginTime)
       };
 
-      await setDoc(doc(db, "attendance", `${employeeId}_${Date.now()}`), loginData);
+      const today = loginTime.toISOString().split('T')[0];
+      await setDoc(doc(db, "attendance", `${employeeId}_${today}`), loginData);
       
-      // Send to Telegram bot (you'll need to implement this)
-      // For now, we'll just log the data
       console.log("Login data:", loginData);
       
-      toast.success("Login successful!");
+      toast.success(`Attendance marked as ${status}`);
       navigate("/employee");
     } catch (error) {
       console.error("Error saving login data:", error);
-      toast.error("Error saving login data");
+      toast.error("Error recording attendance");
     }
   };
 
   return (
-    <Card className="w-[350px] shadow-lg">
+    <Card className="w-[350px] shadow-lg bg-gray-900 text-white">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">HRMS Login</CardTitle>
       </CardHeader>
@@ -75,6 +100,7 @@ const LoginForm = () => {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
+                className="bg-gray-800 border-gray-700"
               />
             </div>
             <div className="space-y-2">
@@ -85,9 +111,10 @@ const LoginForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-gray-800 border-gray-700"
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
               Sign In
             </Button>
           </form>
