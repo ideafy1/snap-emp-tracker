@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
 import { format } from "date-fns";
+import { LogOut } from "lucide-react";
 
 interface AttendanceLog {
   employeeId: string;
@@ -29,7 +30,13 @@ const EmployeeDashboard = () => {
     late: 0,
     regularize: 0
   });
-  const employeeId = "39466";
+  const employeeId = "39466"; // This should come from authentication context
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      window.location.href = "/";
+    }
+  };
 
   useEffect(() => {
     const q = query(
@@ -63,7 +70,20 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="container mx-auto py-8 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-8">Employee Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-4">
+          <img src="/lovable-uploads/406b5f0c-4670-4e06-8166-fdfc696f6146.png" alt="Sky Investment Logo" className="h-12" />
+          <h1 className="text-3xl font-bold">Sky Investment - Employee Dashboard</h1>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={handleLogout}
+          className="text-white hover:bg-gray-800"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="bg-green-900">

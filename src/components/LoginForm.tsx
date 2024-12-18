@@ -26,25 +26,34 @@ const LoginForm = () => {
       return;
     }
 
-    // Employee credentials
-    if (employeeId === "39466" && password === "Aditya@123") {
-      // Check if first login of the day
-      const today = new Date().toISOString().split('T')[0];
-      const attendanceRef = doc(db, "attendance", `${employeeId}_${today}`);
-      const attendanceDoc = await getDoc(attendanceRef);
+    // Check if employee exists
+    const employeeRef = doc(db, "employees", employeeId);
+    const employeeDoc = await getDoc(employeeRef);
 
-      if (!attendanceDoc.exists()) {
-        setShowCamera(true);
-        toast.success("First login of the day - Please capture your photo");
-      } else {
-        // Subsequent login
-        navigate("/employee");
-        toast.success("Welcome back!");
-      }
+    if (!employeeDoc.exists()) {
+      toast.error("Employee not found");
       return;
     }
 
-    toast.error("Invalid credentials");
+    const employeeData = employeeDoc.data();
+    if (employeeData.password !== password) {
+      toast.error("Invalid password");
+      return;
+    }
+
+    // Check if first login of the day
+    const today = new Date().toISOString().split('T')[0];
+    const attendanceRef = doc(db, "attendance", `${employeeId}_${today}`);
+    const attendanceDoc = await getDoc(attendanceRef);
+
+    if (!attendanceDoc.exists()) {
+      setShowCamera(true);
+      toast.success("First login of the day - Please capture your photo");
+    } else {
+      // Subsequent login
+      navigate("/employee");
+      toast.success("Welcome back!");
+    }
   };
 
   const handlePhotoCapture = async (imageData: string) => {
@@ -87,7 +96,10 @@ const LoginForm = () => {
   return (
     <Card className="w-[350px] shadow-lg bg-gray-900 text-white">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">HRMS Login</CardTitle>
+        <div className="flex justify-center mb-4">
+          <img src="/lovable-uploads/406b5f0c-4670-4e06-8166-fdfc696f6146.png" alt="Sky Investment Logo" className="h-16" />
+        </div>
+        <CardTitle className="text-2xl text-center">Sky Investment HRMS</CardTitle>
       </CardHeader>
       <CardContent>
         {!showCamera ? (

@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, setDoc, doc } from "firebase/firestore";
 import { toast } from "sonner";
+import { LogOut } from "lucide-react";
 
 interface AttendanceLog {
   employeeId: string;
@@ -55,7 +56,12 @@ const AdminDashboard = () => {
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, "employees"), newEmployee);
+      // Use setDoc with a specific document ID instead of addDoc
+      await setDoc(doc(db, "employees", newEmployee.id), {
+        ...newEmployee,
+        createdAt: new Date().toISOString()
+      });
+      
       toast.success("Employee added successfully");
       setShowAddEmployee(false);
       setNewEmployee({ id: '', name: '', email: '', password: '' });
@@ -65,16 +71,36 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      // Implement logout logic here
+      window.location.href = "/";
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 bg-gray-900 text-white min-h-screen">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button 
-          onClick={() => setShowAddEmployee(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          Add Employee
-        </Button>
+        <div className="flex items-center gap-4">
+          <img src="/lovable-uploads/406b5f0c-4670-4e06-8166-fdfc696f6146.png" alt="Sky Investment Logo" className="h-12" />
+          <h1 className="text-3xl font-bold">Sky Investment - Admin Dashboard</h1>
+        </div>
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => setShowAddEmployee(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Add Employee
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleLogout}
+            className="text-white hover:bg-gray-800"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       
       <Dialog open={showAddEmployee} onOpenChange={setShowAddEmployee}>
