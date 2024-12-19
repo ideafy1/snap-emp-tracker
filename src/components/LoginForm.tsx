@@ -94,12 +94,13 @@ const LoginForm = () => {
   };
 
   return (
-    <Card className="w-[350px] shadow-lg bg-gray-900 text-white">
+    <Card className="w-[350px] shadow-lg bg-white">
       <CardHeader className="space-y-1">
         <div className="flex justify-center mb-4">
           <img src="/lovable-uploads/406b5f0c-4670-4e06-8166-fdfc696f6146.png" alt="Sky Investment Logo" className="h-16" />
         </div>
-        <CardTitle className="text-2xl text-center">Sky Investment HRMS</CardTitle>
+        <CardTitle className="text-2xl text-center text-gray-800">Sky Investment HRMS</CardTitle>
+        <p className="text-center text-gray-600">Employee Management System</p>
       </CardHeader>
       <CardContent>
         {!showCamera ? (
@@ -112,7 +113,7 @@ const LoginForm = () => {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
-                className="bg-gray-800 border-gray-700"
+                className="border-gray-300"
               />
             </div>
             <div className="space-y-2">
@@ -123,7 +124,7 @@ const LoginForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-gray-800 border-gray-700"
+                className="border-gray-300"
               />
             </div>
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">

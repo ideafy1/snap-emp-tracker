@@ -31,6 +31,8 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
       case 'L':
       case 'PL':
         return 'bg-yellow-500';
+      case 'GH':
+        return 'bg-blue-500';
       default:
         return 'bg-gray-500';
     }
@@ -51,10 +53,10 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 mt-4">
+    <div className="bg-white rounded-lg p-4 mt-4 shadow-sm">
       <Calendar
         mode="single"
-        className="rounded-md border bg-gray-700 text-white"
+        className="rounded-md border"
         modifiers={modifiers}
         modifiersStyles={modifiersStyles}
         components={{
@@ -77,7 +79,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <div className="text-xs">
+                        <div className="text-xs space-y-1">
                           <p>Status: {attendance.status}</p>
                           {attendance.loginTime && <p>Login: {attendance.loginTime}</p>}
                           {attendance.logoutTime && <p>Logout: {attendance.logoutTime}</p>}
@@ -86,6 +88,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                               size="sm" 
                               variant="outline"
                               onClick={() => onRegularize?.(date)}
+                              className="w-full mt-2"
                             >
                               Regularize
                             </Button>
