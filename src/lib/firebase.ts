@@ -1,11 +1,11 @@
-import { initializeApp, FirebaseApp } from "firebase/app";
+import { initializeApp, FirebaseApp, FirebaseOptions } from "firebase/app";
 import { Analytics, getAnalytics } from "firebase/analytics";
 import { Auth, getAuth } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
 import { FirebaseStorage, getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
+// Your web app's Firebase configuration with proper type annotation
+const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyDAh0cC62A-tEWn1VDIZdFn4hsKb1HVU-Q",
   authDomain: "sky-investments-hrms.firebaseapp.com",
   databaseURL: "https://sky-investments-hrms-default-rtdb.asia-southeast1.firebasedatabase.app",
