@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { User, MapPin, Globe } from 'lucide-react';
+import { User, MapPin, Globe, ArrowLeft } from 'lucide-react';
 import AttendanceCalendar from './AttendanceCalendar';
 
 interface Employee {
@@ -79,7 +79,17 @@ const EmployeeList: React.FC<{ employees: Employee[] }> = ({ employees }) => {
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="bg-white max-w-4xl">
             <DialogHeader>
-              <DialogTitle>Employee Details</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setShowDialog(false)}
+                  className="mr-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                Employee Details
+              </DialogTitle>
             </DialogHeader>
             {selectedEmployee && (
               <div className="grid gap-6">

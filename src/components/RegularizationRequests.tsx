@@ -40,14 +40,14 @@ const RegularizationRequests: React.FC<{ requests: RegularizationRequest[] }> = 
   };
 
   return (
-    <Card className="bg-gray-800 text-white">
+    <Card className="bg-white">
       <CardHeader>
         <CardTitle>Regularization Requests</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {requests.map((request) => (
-            <div key={request.id} className="flex items-center justify-between p-4 border border-gray-700 rounded-lg">
+            <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <div>
                 <p>Employee ID: {request.employeeId}</p>
                 <p>Date: {request.date}</p>
@@ -57,14 +57,14 @@ const RegularizationRequests: React.FC<{ requests: RegularizationRequest[] }> = 
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => handleApprove(request.id)}
                 >
                   Approve
                 </Button>
                 <Button
                   variant="outline"
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                   onClick={() => handleReject(request.id)}
                 >
                   Reject

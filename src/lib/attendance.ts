@@ -20,3 +20,17 @@ export const getAttendanceStatus = (loginTime: Date): AttendanceStatus => {
 export const formatIndianTime = (date: Date): string => {
   return format(toZonedTime(date, TIMEZONE), 'dd/MM/yyyy HH:mm:ss');
 };
+
+export const calculateAttendance = (employeeCreatedAt: Date, attendanceLogs: any[]) => {
+  const today = new Date();
+  const workingDays = Math.floor((today.getTime() - employeeCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const present = attendanceLogs.filter(log => log.status === 'P').length;
+  const late = attendanceLogs.filter(log => log.status === 'PL').length;
+  
+  return {
+    present,
+    late,
+    absent: workingDays - (present + late)
+  };
+};

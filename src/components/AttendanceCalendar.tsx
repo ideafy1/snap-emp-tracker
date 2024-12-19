@@ -83,7 +83,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                           <p>Status: {attendance.status}</p>
                           {attendance.loginTime && <p>Login: {attendance.loginTime}</p>}
                           {attendance.logoutTime && <p>Logout: {attendance.logoutTime}</p>}
-                          {isEmployee && attendance.status === 'A' && (
+                          {isEmployee && (attendance.status === 'A' || attendance.status === 'PL') && (
                             <Button 
                               size="sm" 
                               variant="outline"
