@@ -1,5 +1,5 @@
-import { format, isAfter, isBefore, parseISO } from 'date-fns';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { format, isAfter, isBefore, parseISO, differenceInDays } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 export const WORK_START_TIME = '09:30';
 export const WORK_END_TIME = '18:00';
@@ -23,7 +23,7 @@ export const formatIndianTime = (date: Date): string => {
 
 export const calculateAttendance = (employeeCreatedAt: Date, attendanceLogs: any[]) => {
   const today = new Date();
-  const workingDays = Math.floor((today.getTime() - employeeCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+  const workingDays = Math.max(0, differenceInDays(today, employeeCreatedAt));
   
   const present = attendanceLogs.filter(log => log.status === 'P').length;
   const late = attendanceLogs.filter(log => log.status === 'PL').length;
@@ -31,6 +31,10 @@ export const calculateAttendance = (employeeCreatedAt: Date, attendanceLogs: any
   return {
     present,
     late,
-    absent: workingDays - (present + late)
+    absent: Math.max(0, workingDays - (present + late))
   };
+};
+
+export const canRegularize = (date: Date, status: string) => {
+  return status === 'A' || status === 'PL';
 };

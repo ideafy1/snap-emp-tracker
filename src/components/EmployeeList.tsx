@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { User, MapPin, Globe, ArrowLeft } from 'lucide-react';
-import AttendanceCalendar from './AttendanceCalendar';
+import { User } from 'lucide-react';
+import EmployeeDetailsDialog from './EmployeeDetailsDialog';
 
 interface Employee {
   id: string;
@@ -76,99 +76,16 @@ const EmployeeList: React.FC<{ employees: Employee[] }> = ({ employees }) => {
           ))}
         </div>
 
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="bg-white max-w-4xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => setShowDialog(false)}
-                  className="mr-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                Employee Details
-              </DialogTitle>
-            </DialogHeader>
-            {selectedEmployee && (
-              <div className="grid gap-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex-shrink-0">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        {selectedEmployee.photo ? (
-                          <img
-                            src={selectedEmployee.photo}
-                            alt={selectedEmployee.name}
-                            className="w-32 h-32 rounded-lg cursor-pointer object-cover"
-                          />
-                        ) : (
-                          <User className="w-32 h-32 p-6 bg-gray-100 rounded-lg" />
-                        )}
-                      </DialogTrigger>
-                      <DialogContent className="bg-white">
-                        {selectedEmployee.photo && (
-                          <img
-                            src={selectedEmployee.photo}
-                            alt={selectedEmployee.name}
-                            className="max-w-full h-auto rounded"
-                          />
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800">{selectedEmployee.name}</h3>
-                      <p className="text-gray-600">Employee ID: {selectedEmployee.id}</p>
-                      <p className="text-gray-600">{selectedEmployee.email}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-600">Today's Status</p>
-                        <span className={`inline-block px-3 py-1 rounded-full text-sm ${getStatusColor(selectedEmployee.status)}`}>
-                          {selectedEmployee.status || 'N/A'}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-600">Time Logs</p>
-                        <div className="text-sm">
-                          <p>Login: {selectedEmployee.loginTime || 'N/A'}</p>
-                          <p>Logout: {selectedEmployee.logoutTime || 'N/A'}</p>
-                        </div>
-                      </div>
-                      {selectedEmployee.location && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-gray-600 flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            Location
-                          </p>
-                          <p className="text-sm">
-                            {selectedEmployee.location.latitude}, {selectedEmployee.location.longitude}
-                          </p>
-                        </div>
-                      )}
-                      {selectedEmployee.ipAddress && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-gray-600 flex items-center gap-2">
-                            <Globe className="w-4 h-4" />
-                            IP Address
-                          </p>
-                          <p className="text-sm">{selectedEmployee.ipAddress}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <AttendanceCalendar
-                  attendanceData={[]} // This should be populated with actual attendance data
-                  isEmployee={false}
-                />
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {selectedEmployee && (
+          <EmployeeDetailsDialog
+            employee={selectedEmployee}
+            open={showDialog}
+            onClose={() => {
+              setShowDialog(false);
+              setSelectedEmployee(null);
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );

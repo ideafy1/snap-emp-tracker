@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 
 interface RegularizationRequest {
   id: string;
@@ -13,6 +13,30 @@ interface RegularizationRequest {
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
 }
+
+export const submitRegularizationRequest = async (
+  employeeId: string,
+  date: Date,
+  time: string,
+  reason: string
+) => {
+  try {
+    await addDoc(collection(db, "regularization_requests"), {
+      employeeId,
+      date: date.toISOString(),
+      time,
+      reason,
+      status: 'pending',
+      submittedAt: new Date().toISOString()
+    });
+    toast.success("Regularization request submitted successfully");
+    return true;
+  } catch (error) {
+    console.error("Error submitting regularization request:", error);
+    toast.error("Failed to submit regularization request");
+    return false;
+  }
+};
 
 const RegularizationRequests: React.FC<{ requests: RegularizationRequest[] }> = ({ requests }) => {
   const handleApprove = async (requestId: string) => {
