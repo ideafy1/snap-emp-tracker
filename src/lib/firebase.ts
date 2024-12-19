@@ -16,12 +16,26 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: "G-SFW495KXL9"
 };
 
-// Initialize Firebase services with proper type annotations
-const app: FirebaseApp = initializeApp(firebaseConfig);
-const analytics: Analytics = getAnalytics(app);
-const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
-const storage: FirebaseStorage = getStorage(app);
+// Initialize Firebase with type safety
+let app: FirebaseApp;
+let analytics: Analytics;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+
+try {
+  // Initialize Firebase
+  app = initializeApp(firebaseConfig);
+  analytics = getAnalytics(app);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  
+  console.log("Firebase initialized successfully");
+} catch (error) {
+  console.error("Error initializing Firebase:", error);
+  throw error;
+}
 
 // Export initialized services
 export { app, analytics, auth, db, storage };
