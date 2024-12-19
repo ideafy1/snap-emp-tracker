@@ -1,60 +1,66 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, getDocs, addDoc } from "firebase/firestore";
-import { format } from "date-fns";
+import { collection, query, where, orderBy, onSnapshot, addDoc } from "firebase/firestore";
 import { LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-
-interface AttendanceLog {
-  employeeId: string;
-  timestamp: string;
-  photo: string;
-  ipAddress: string;
-  location: {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  };
-  status: 'P' | 'PL' | 'A' | 'L';
-  formattedTime: string;
-}
-
-interface RegularizationRequest {
-  date: Date;
-  time: string;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
+import AttendanceCalendar from "@/components/AttendanceCalendar";
 
 const EmployeeDashboard = () => {
-  const [personalLogs, setPersonalLogs] = useState<AttendanceLog[]>([]);
+  const [personalLogs, setPersonalLogs] = useState([]);
   const [stats, setStats] = useState({
     present: 0,
     absent: 0,
     late: 0,
     regularize: 0
   });
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [regularizationReason, setRegularizationReason] = useState("");
   const [regularizationTime, setRegularizationTime] = useState("");
   const [showRegularizeDialog, setShowRegularizeDialog] = useState(false);
   const employeeId = "39466"; // This should come from authentication context
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      window.location.href = "/";
-    }
+  useEffect(() => {
+    const q = query(
+      collection(db, "attendance"),
+      where("employeeId", "==", employeeId),
+      orderBy("timestamp", "desc")
+    );
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const logs = [];
+      querySnapshot.forEach((doc) => {
+        logs.push(doc.data());
+      });
+      setPersonalLogs(logs);
+      
+      const present = logs.filter(log => log.status === 'P').length;
+      const late = logs.filter(log => log.status === 'PL').length;
+      const regularize = logs.filter(log => !log.status).length;
+      
+      setStats({
+        present,
+        absent: 30 - (present + late),
+        late,
+        regularize
+      });
+    });
+
+    return () => unsubscribe();
+  }, [employeeId]);
+
+  const handleRegularize = (date: Date) => {
+    setSelectedDate(date);
+    setShowRegularizeDialog(true);
   };
 
   const handleRegularizationSubmit = async () => {
-    if (!selectedDate || !regularizationReason || !regularizationTime) {
+    if (!regularizationReason || !regularizationTime) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -79,38 +85,15 @@ const EmployeeDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "attendance"),
-      where("employeeId", "==", employeeId),
-      orderBy("timestamp", "desc")
-    );
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const logs: AttendanceLog[] = [];
-      querySnapshot.forEach((doc) => {
-        logs.push(doc.data() as AttendanceLog);
-      });
-      setPersonalLogs(logs);
-      
-      const present = logs.filter(log => log.status === 'P').length;
-      const late = logs.filter(log => log.status === 'PL').length;
-      const regularize = logs.filter(log => !log.status).length;
-      
-      setStats({
-        present,
-        absent: 30 - (present + late),
-        late,
-        regularize
-      });
-    });
-
-    return () => unsubscribe();
-  }, [employeeId]);
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      window.location.href = "/";
+    }
+  };
 
   return (
-    <div className="container mx-auto py-8 bg-gray-900 text-white min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto py-8 bg-gray-900 text-white min-h-screen px-4">
+      <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <img src="/lovable-uploads/406b5f0c-4670-4e06-8166-fdfc696f6146.png" alt="Sky Investment Logo" className="h-12" />
           <h1 className="text-3xl font-bold">Sky Investment - Employee Dashboard</h1>
@@ -125,7 +108,7 @@ const EmployeeDashboard = () => {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Button 
           className="h-auto p-6 bg-green-900 hover:bg-green-800"
           onClick={() => toast.info(`You have been present for ${stats.present} days this month`)}
@@ -171,20 +154,8 @@ const EmployeeDashboard = () => {
         <DialogContent className="bg-gray-800 text-white">
           <DialogHeader>
             <DialogTitle>Regularize Attendance</DialogTitle>
-            <DialogDescription>
-              Please fill in the details to regularize your attendance
-            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Select Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border bg-gray-700"
-              />
-            </div>
             <div className="space-y-2">
               <Label>Time</Label>
               <Input
@@ -203,97 +174,29 @@ const EmployeeDashboard = () => {
                 placeholder="Please provide a reason for regularization"
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRegularizeDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRegularizationSubmit}>
+            <Button onClick={handleRegularizationSubmit} className="w-full">
               Submit Request
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      <div className="grid gap-6">
-        <Card className="bg-gray-800">
-          <CardHeader>
-            <CardTitle>Your Attendance History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left p-4">Date</th>
-                    <th className="text-left p-4">Time</th>
-                    <th className="text-left p-4">Status</th>
-                    <th className="text-left p-4">Location</th>
-                    <th className="text-left p-4">Photo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {personalLogs.map((log, index) => (
-                    <tr key={index} className="border-b border-gray-700">
-                      <td className="p-4">{format(new Date(log.timestamp), 'dd/MM/yyyy')}</td>
-                      <td className="p-4">{format(new Date(log.timestamp), 'HH:mm:ss')}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded ${
-                          log.status === 'P' ? 'bg-green-600' :
-                          log.status === 'PL' ? 'bg-yellow-600' :
-                          'bg-red-600'
-                        }`}>
-                          {log.status}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">View Location</Button>
-                          </DialogTrigger>
-                          <DialogContent className="bg-gray-800 text-white">
-                            <DialogHeader>
-                              <DialogTitle>Location Details</DialogTitle>
-                            </DialogHeader>
-                            <div>
-                              <p>Latitude: {log.location.latitude}</p>
-                              <p>Longitude: {log.location.longitude}</p>
-                              <p>Accuracy: {log.location.accuracy}m</p>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </td>
-                      <td className="p-4">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <img 
-                              src={log.photo} 
-                              alt="Attendance" 
-                              className="w-16 h-16 object-cover rounded cursor-pointer"
-                            />
-                          </DialogTrigger>
-                          <DialogContent className="bg-gray-800 text-white">
-                            <DialogHeader>
-                              <DialogTitle>Attendance Photo</DialogTitle>
-                            </DialogHeader>
-                            <div className="flex justify-center">
-                              <img 
-                                src={log.photo} 
-                                alt="Attendance" 
-                                className="max-w-full h-auto rounded"
-                              />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="bg-gray-800">
+        <CardHeader>
+          <CardTitle>Your Attendance History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AttendanceCalendar
+            attendanceData={personalLogs.map(log => ({
+              date: new Date(log.timestamp).toISOString().split('T')[0],
+              status: log.status,
+              loginTime: log.formattedTime
+            }))}
+            onRegularize={handleRegularize}
+            isEmployee={true}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
