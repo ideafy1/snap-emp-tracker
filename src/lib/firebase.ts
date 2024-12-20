@@ -17,25 +17,13 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 // Initialize Firebase with type safety
-let app: FirebaseApp;
-let analytics: Analytics;
-let auth: Auth;
-let db: Firestore;
-let storage: FirebaseStorage;
+const app: FirebaseApp = initializeApp(firebaseConfig);
+const analytics: Analytics = getAnalytics(app);
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app);
 
-try {
-  // Initialize Firebase
-  app = initializeApp(firebaseConfig);
-  analytics = getAnalytics(app);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  
-  console.log("Firebase initialized successfully");
-} catch (error) {
-  console.error("Error initializing Firebase:", error);
-  throw error;
-}
+console.log("Firebase initialized successfully");
 
 // Export initialized services
 export { app, analytics, auth, db, storage };
