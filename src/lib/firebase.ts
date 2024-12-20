@@ -1,11 +1,15 @@
-import { initializeApp, FirebaseApp, FirebaseOptions } from "firebase/app";
-import { Analytics, getAnalytics } from "firebase/analytics";
-import { Auth, getAuth } from "firebase/auth";
-import { Firestore, getFirestore } from "firebase/firestore";
-import { FirebaseStorage, getStorage } from "firebase/storage";
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import type { FirebaseApp } from "firebase/app";
+import type { Analytics } from "firebase/analytics";
+import type { Auth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
+import type { FirebaseStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration with proper type annotation
-const firebaseConfig: FirebaseOptions = {
+const firebaseConfig = {
   apiKey: "AIzaSyDAh0cC62A-tEWn1VDIZdFn4hsKb1HVU-Q",
   authDomain: "sky-investments-hrms.firebaseapp.com",
   databaseURL: "https://sky-investments-hrms-default-rtdb.asia-southeast1.firebasedatabase.app",
